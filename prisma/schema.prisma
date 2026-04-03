@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum JohariSessionStatus {
+  ACTIVE   @map("active")
+  CLOSED   @map("closed")
+  ARCHIVED @map("archived")
+}
+
+model User {
+  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email          String              @unique
+  passwordHash   String?             @map("password_hash")
+  fullName       String?             @map("full_name")
+  avatarUrl      String?             @map("avatar_url")
+  isActive       Boolean             @default(true) @map("is_active")
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  googleAccounts UserGoogleAccount[]
+  refreshTokens  RefreshToken[]
+  johariSessions JohariSession[]     @relation("JohariSessionOwner")
+  selfSelections SelfSelection[]
+
+  @@map("users")
+}
+
+model UserGoogleAccount {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  googleSub     String   @unique @map("google_sub")
+  email         String
+  emailVerified Boolean  @default(true) @map("email_verified")
+  hostedDomain  String?  @map("hosted_domain")
+  fullName      String?  @map("full_name")
+  givenName     String?  @map("given_name")
+  familyName    String?  @map("family_name")
+  pictureUrl    String?  @map("picture_url")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  lastLoginAt   DateTime @default(now()) @map("last_login_at") @db.Timestamptz(6)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "user_google_accounts_user_id_idx")
+  @@index([email], map: "user_google_accounts_email_idx")
+  @@map("user_google_accounts")
+}
+
+model RefreshToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tokenId   String    @unique @map("token_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(6)
+  userAgent String?   @map("user_agent")
+  ipAddress String?   @map("ip_address")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "refresh_tokens_user_id_idx")
+  @@index([expiresAt], map: "refresh_tokens_expires_at_idx")
+  @@map("refresh_tokens")
+}
+
+model AdjectiveMaster {
+  id             Int             @id @default(autoincrement())
+  word           String          @unique
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  selfSelections SelfSelection[]
+
+  @@map("adjectives_master")
+}
+
+model JohariSession {
+  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerUserId     String              @map("owner_user_id") @db.Uuid
+  title           String              @default("My Johari Window") @db.VarChar(120)
+  inviteToken     String              @unique @map("invite_token")
+  inviteExpiresAt DateTime            @map("invite_expires_at") @db.Timestamptz(6)
+  status          JohariSessionStatus @default(ACTIVE)
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  owner           User                @relation("JohariSessionOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  selfSelections  SelfSelection[]
+  peerSubmissions PeerSubmission[]
+  computedResult  ComputedResult?
+
+  @@index([ownerUserId], map: "johari_sessions_owner_user_id_idx")
+  @@index([createdAt], map: "johari_sessions_created_at_idx")
+  @@map("johari_sessions")
+}
+
+model SelfSelection {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId   String          @map("session_id") @db.Uuid
+  userId      String          @map("user_id") @db.Uuid
+  adjectiveId Int             @map("adjective_id")
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  session     JohariSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adjective   AdjectiveMaster @relation(fields: [adjectiveId], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId, userId, adjectiveId], map: "self_selections_unique_idx")
+  @@index([sessionId], map: "self_selections_session_id_idx")
+  @@map("self_selections")
+}
+
+model PeerSubmission {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId       String        @map("session_id") @db.Uuid
+  inviteToken     String        @map("invite_token")
+  peerDisplayName String        @map("peer_display_name") @db.VarChar(50)
+  adjectiveIds    Int[]         @map("adjective_ids")
+  fingerprint     String
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  session         JohariSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, fingerprint], map: "peer_submissions_unique_fingerprint_idx")
+  @@index([sessionId], map: "peer_submissions_session_id_idx")
+  @@index([createdAt], map: "peer_submissions_created_at_idx")
+  @@map("peer_submissions")
+}
+
+model ComputedResult {
+  sessionId  String        @id @map("session_id") @db.Uuid
+  openIds    Int[]         @default([]) @map("open_ids")
+  blindIds   Int[]         @default([]) @map("blind_ids")
+  hiddenIds  Int[]         @default([]) @map("hidden_ids")
+  unknownIds Int[]         @default([]) @map("unknown_ids")
+  peerCounts Json          @map("peer_counts")
+  computedAt DateTime      @default(now()) @map("computed_at") @db.Timestamptz(6)
+  session    JohariSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("computed_results")
+}
