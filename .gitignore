@@ -1,4 +1,53 @@
-node_modules
+# =========================
+# Dependencies
+# =========================
+node_modules/
+
+# =========================
+# Build output
+# =========================
+dist/
+build/
+
+# =========================
+# TypeScript
+# =========================
+*.tsbuildinfo
+
+# =========================
+# Environment variables
+# =========================
 .env
 *.env
-dist
+
+# =========================
+# Prisma
+# =========================
+prisma/generated/
+.prisma/
+
+# (IMPORTANT: keep schema.prisma tracked)
+# prisma/schema.prisma  <-- DO NOT IGNORE
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# ESLint cache
+# =========================
+.eslintcache
+
+# =========================
+# Editor / OS junk
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
