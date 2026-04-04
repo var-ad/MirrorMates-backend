@@ -12,21 +12,43 @@ enum JohariSessionStatus {
   ARCHIVED @map("archived")
 }
 
+enum JohariResponseIdentityMode {
+  ANONYMOUS @map("anonymous")
+  NAMED     @map("named")
+}
+
 model User {
   id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email          String              @unique
   passwordHash   String?             @map("password_hash")
   fullName       String?             @map("full_name")
   avatarUrl      String?             @map("avatar_url")
+  emailVerified  Boolean             @default(true) @map("email_verified")
   isActive       Boolean             @default(true) @map("is_active")
   createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   googleAccounts UserGoogleAccount[]
+  passwordResetOtp PasswordResetOtp?
   refreshTokens  RefreshToken[]
   johariSessions JohariSession[]     @relation("JohariSessionOwner")
   selfSelections SelfSelection[]
 
   @@map("users")
+}
+
+model PendingLocalSignup {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  fullName     String?  @map("full_name")
+  otpHash      String   @map("otp_hash")
+  otpExpiresAt DateTime @map("otp_expires_at") @db.Timestamptz(6)
+  attempts     Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([otpExpiresAt], map: "pending_local_signups_otp_expires_at_idx")
+  @@map("pending_local_signups")
 }
 
 model UserGoogleAccount {
@@ -67,6 +89,20 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+model PasswordResetOtp {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @unique @map("user_id") @db.Uuid
+  otpHash      String   @map("otp_hash")
+  otpExpiresAt DateTime @map("otp_expires_at") @db.Timestamptz(6)
+  attempts     Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([otpExpiresAt], map: "password_reset_otps_otp_expires_at_idx")
+  @@map("password_reset_otps")
+}
+
 model AdjectiveMaster {
   id             Int             @id @default(autoincrement())
   word           String          @unique
@@ -77,18 +113,19 @@ model AdjectiveMaster {
 }
 
 model JohariSession {
-  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ownerUserId     String              @map("owner_user_id") @db.Uuid
-  title           String              @default("My Johari Window") @db.VarChar(120)
-  inviteToken     String              @unique @map("invite_token")
-  inviteExpiresAt DateTime            @map("invite_expires_at") @db.Timestamptz(6)
-  status          JohariSessionStatus @default(ACTIVE)
-  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  owner           User                @relation("JohariSessionOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
-  selfSelections  SelfSelection[]
-  peerSubmissions PeerSubmission[]
-  computedResult  ComputedResult?
+  id                   String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerUserId          String                     @map("owner_user_id") @db.Uuid
+  title                String                     @default("My Johari Window") @db.VarChar(120)
+  inviteToken          String                     @unique @map("invite_token")
+  inviteExpiresAt      DateTime                   @map("invite_expires_at") @db.Timestamptz(6)
+  responseIdentityMode JohariResponseIdentityMode @default(NAMED) @map("response_identity_mode")
+  status               JohariSessionStatus        @default(ACTIVE)
+  createdAt            DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime                   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  owner                User                       @relation("JohariSessionOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  selfSelections       SelfSelection[]
+  peerSubmissions      PeerSubmission[]
+  computedResult       ComputedResult?
 
   @@index([ownerUserId], map: "johari_sessions_owner_user_id_idx")
   @@index([createdAt], map: "johari_sessions_created_at_idx")
@@ -114,7 +151,7 @@ model PeerSubmission {
   id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sessionId       String        @map("session_id") @db.Uuid
   inviteToken     String        @map("invite_token")
-  peerDisplayName String        @map("peer_display_name") @db.VarChar(50)
+  peerDisplayName String?       @map("peer_display_name") @db.VarChar(50)
   adjectiveIds    Int[]         @map("adjective_ids")
   fingerprint     String
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)

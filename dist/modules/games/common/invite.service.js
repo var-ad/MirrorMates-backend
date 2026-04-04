@@ -18,7 +18,8 @@ async function getActiveSessionByInviteToken(token) {
             id: true,
             ownerUserId: true,
             inviteToken: true,
-            inviteExpiresAt: true
+            inviteExpiresAt: true,
+            responseIdentityMode: true
         }
     });
 }

@@ -1,6 +1,12 @@
 import { Router } from "express";
 import { requireAuth } from "../../../middleware/auth.middleware";
-import { inviteSubmissionRateLimiter } from "../../../middleware/rateLimiters";
+import {
+  inviteMetaRateLimiter,
+  inviteSubmissionRateLimiter,
+  reportGenerationRateLimiter,
+  sessionCreationRateLimiter,
+  sessionUpdateRateLimiter
+} from "../../../middleware/rateLimiters";
 import { validate } from "../../../middleware/validate";
 import {
   createSessionController,
@@ -28,22 +34,30 @@ export const johariRouter = Router();
 
 johariRouter.get("/johari/adjectives", requireAuth, listAdjectivesController);
 johariRouter.get("/johari/sessions/me", requireAuth, listMySessionsController);
-johariRouter.post("/johari/session/create", requireAuth, validate({ body: createSessionSchema }), createSessionController);
+johariRouter.post(
+  "/johari/session/create",
+  requireAuth,
+  sessionCreationRateLimiter,
+  validate({ body: createSessionSchema }),
+  createSessionController
+);
 johariRouter.get("/johari/session/:id", requireAuth, validate({ params: sessionIdParamSchema }), getSessionController);
 johariRouter.post(
   "/johari/session/:id/self-select",
   requireAuth,
+  sessionUpdateRateLimiter,
   validate({ params: sessionIdParamSchema, body: selfSelectSchema }),
   selfSelectController
 );
 johariRouter.patch(
   "/johari/session/:id/invite",
   requireAuth,
+  sessionUpdateRateLimiter,
   validate({ params: sessionIdParamSchema, body: updateInviteSettingsSchema }),
   updateInviteSettingsController
 );
 
-johariRouter.get("/invite/:token/meta", validate({ params: tokenParamSchema }), inviteMetaController);
+johariRouter.get("/invite/:token/meta", inviteMetaRateLimiter, validate({ params: tokenParamSchema }), inviteMetaController);
 johariRouter.post(
   "/invite/:token/submit",
   inviteSubmissionRateLimiter,
@@ -61,6 +75,7 @@ johariRouter.get("/johari/session/:id/report", requireAuth, validate({ params: s
 johariRouter.post(
   "/johari/session/:id/generate-report",
   requireAuth,
+  reportGenerationRateLimiter,
   validate({ params: sessionIdParamSchema }),
   generateReportController
 );

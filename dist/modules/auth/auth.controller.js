@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logoutController = exports.refreshController = exports.googleLoginController = exports.loginController = exports.signupController = void 0;
+exports.resetPasswordController = exports.forgotPasswordController = exports.changePasswordController = exports.logoutController = exports.refreshController = exports.googleLoginController = exports.loginController = exports.meController = exports.verifySignupOtpController = exports.signupController = void 0;
 const http_1 = require("../../utils/http");
 const auth_service_1 = require("./auth.service");
 function requestContext(req) {
@@ -11,7 +11,15 @@ function requestContext(req) {
 }
 exports.signupController = (0, http_1.asyncHandler)(async (req, res) => {
     const result = await (0, auth_service_1.signup)(req.body, requestContext(req));
-    res.status(201).json(result);
+    res.status(202).json(result);
+});
+exports.verifySignupOtpController = (0, http_1.asyncHandler)(async (req, res) => {
+    const result = await (0, auth_service_1.verifySignupOtp)(req.body, requestContext(req));
+    res.json(result);
+});
+exports.meController = (0, http_1.asyncHandler)(async (req, res) => {
+    const result = await (0, auth_service_1.getCurrentUser)(req.user.id);
+    res.json(result);
 });
 exports.loginController = (0, http_1.asyncHandler)(async (req, res) => {
     const result = await (0, auth_service_1.login)(req.body, requestContext(req));
@@ -28,4 +36,16 @@ exports.refreshController = (0, http_1.asyncHandler)(async (req, res) => {
 exports.logoutController = (0, http_1.asyncHandler)(async (req, res) => {
     await (0, auth_service_1.logout)(req.body.refreshToken);
     res.json({ message: "Logged out" });
+});
+exports.changePasswordController = (0, http_1.asyncHandler)(async (req, res) => {
+    const result = await (0, auth_service_1.changePassword)(req.user.id, req.body, requestContext(req));
+    res.json(result);
+});
+exports.forgotPasswordController = (0, http_1.asyncHandler)(async (req, res) => {
+    const result = await (0, auth_service_1.forgotPassword)(req.body.email);
+    res.json(result);
+});
+exports.resetPasswordController = (0, http_1.asyncHandler)(async (req, res) => {
+    const result = await (0, auth_service_1.resetPassword)(req.body);
+    res.json(result);
 });
