@@ -1,6 +1,6 @@
 import { app } from "./app";
 import { env } from "./config/env";
-import { connectMongo } from "./db/mongo";
+import { connectMongo, disconnectMongo } from "./db/mongo";
 import { prisma } from "./db/prisma";
 
 async function start(): Promise<void> {
@@ -8,9 +8,40 @@ async function start(): Promise<void> {
     await prisma.$connect();
     await connectMongo();
 
-    app.listen(env.PORT, () => {
+    const server = app.listen(env.PORT, () => {
       console.log(`Backend listening on port ${env.PORT}`);
     });
+
+    let isShuttingDown = false;
+
+    const shutdown = (signal: string) => {
+      if (isShuttingDown) {
+        return;
+      }
+      isShuttingDown = true;
+
+      console.log(`${signal} received, closing server`);
+      server.close(() => {
+        void (async () => {
+          try {
+            await prisma.$disconnect();
+            await disconnectMongo();
+          } catch (closeError) {
+            console.error("Error while closing database connections", closeError);
+          } finally {
+            process.exit(0);
+          }
+        })();
+      });
+
+      setTimeout(() => {
+        console.error("Shutdown timed out, forcing exit");
+        process.exit(1);
+      }, 10_000).unref();
+    };
+
+    process.once("SIGTERM", () => shutdown("SIGTERM"));
+    process.once("SIGINT", () => shutdown("SIGINT"));
   } catch (error) {
     console.error("Failed to start server", error);
     process.exit(1);

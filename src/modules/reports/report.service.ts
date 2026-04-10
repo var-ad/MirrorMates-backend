@@ -19,5 +19,8 @@ export async function saveGeminiReport(input: {
 }
 
 export async function getLatestGeminiReport(sessionId: string, userId: string) {
-  return GeminiGeneratedReportModel.findOne({ sessionId, userId }).sort({ createdAt: -1 }).lean();
+  return GeminiGeneratedReportModel.findOne({ sessionId, userId })
+    .sort({ createdAt: -1 })
+    .select("-prompt")
+    .lean();
 }

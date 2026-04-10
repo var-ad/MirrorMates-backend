@@ -1,9 +1,9 @@
 import { JohariSessionStatus } from "@prisma/client";
 import { prisma } from "../../../db/prisma";
+import { normalizeInviteToken } from "../johari/johari.shared";
 
 export async function getActiveSessionByInviteToken(token: string) {
-  const trimmedToken = token.trim();
-  const normalizedToken = /^[A-Z0-9]{5}$/i.test(trimmedToken) ? trimmedToken.toUpperCase() : trimmedToken;
+  const normalizedToken = normalizeInviteToken(token);
 
   return prisma.johariSession.findFirst({
     where: {

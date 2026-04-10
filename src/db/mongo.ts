@@ -2,7 +2,18 @@ import dns from "dns";
 import mongoose from "mongoose";
 import { env } from "../config/env";
 
-let isConnected = false;
+let connectOnce: Promise<void> | null = null;
+let disconnectListenerRegistered = false;
+
+function registerDisconnectListener(): void {
+  if (disconnectListenerRegistered) {
+    return;
+  }
+  disconnectListenerRegistered = true;
+  mongoose.connection.on("disconnected", () => {
+    connectOnce = null;
+  });
+}
 
 function buildStandardMongoUriFromSrvRecord(
   uri: string,
@@ -71,14 +82,31 @@ async function resolveMongoUri(uri: string): Promise<string> {
 }
 
 export async function connectMongo(): Promise<void> {
-  if (isConnected) {
+  registerDisconnectListener();
+
+  if (mongoose.connection.readyState === 1) {
     return;
   }
-  const mongoUri = await resolveMongoUri(env.MONGODB_URI);
 
-  await mongoose.connect(mongoUri, {
-    appName: env.MONGODB_APP_NAME,
-    serverSelectionTimeoutMS: 10000
-  });
-  isConnected = true;
+  if (!connectOnce) {
+    connectOnce = (async () => {
+      const mongoUri = await resolveMongoUri(env.MONGODB_URI);
+      await mongoose.connect(mongoUri, {
+        appName: env.MONGODB_APP_NAME,
+        serverSelectionTimeoutMS: 10000,
+      });
+    })();
+  }
+
+  try {
+    await connectOnce;
+  } catch (error) {
+    connectOnce = null;
+    throw error;
+  }
+}
+
+export async function disconnectMongo(): Promise<void> {
+  await mongoose.disconnect();
+  connectOnce = null;
 }

@@ -66,11 +66,24 @@ export async function generateGeminiJohariReport(input: JohariReportInput): Prom
   const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL });
 
-  const response = await model.generateContent(prompt);
-  const reportText = response.response.text();
-
-  return {
-    prompt,
-    reportText
-  };
+  try {
+    const response = await model.generateContent(prompt);
+    const reportText = response.response.text();
+    return {
+      prompt,
+      reportText,
+    };
+  } catch (error) {
+    console.error("Gemini generateContent failed", error);
+    const detail =
+      env.NODE_ENV === "production"
+        ? "Please try again in a few minutes."
+        : error instanceof Error
+          ? error.message
+          : "Unknown error";
+    return {
+      prompt,
+      reportText: `Could not generate AI insights right now (${detail})`,
+    };
+  }
 }

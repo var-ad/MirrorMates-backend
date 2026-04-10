@@ -13,17 +13,27 @@ export const app = express();
 
 app.set("trust proxy", env.NODE_ENV === "production" ? 1 : false);
 
-const defaultLocalOrigins = ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173", "http://127.0.0.1:5173"];
+const defaultLocalOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
 
 function normalizeOrigin(origin: string): string {
   return origin.trim().replace(/\/+$/, "");
 }
 
 function isLocalOrigin(origin: string): boolean {
-  return origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1");
+  return (
+    origin.startsWith("http://localhost") ||
+    origin.startsWith("http://127.0.0.1")
+  );
 }
 
-const configuredOrigins = [env.FRONTEND_URL, ...env.CORS_ALLOWED_ORIGINS].map(normalizeOrigin);
+const configuredOrigins = [env.FRONTEND_URL, ...env.CORS_ALLOWED_ORIGINS].map(
+  normalizeOrigin,
+);
 
 if (env.NODE_ENV === "production") {
   for (const origin of configuredOrigins) {
@@ -32,14 +42,18 @@ if (env.NODE_ENV === "production") {
     }
 
     if (isLocalOrigin(origin)) {
-      throw new Error("Localhost origins are not allowed in production CORS configuration");
+      throw new Error(
+        "Localhost origins are not allowed in production CORS configuration",
+      );
     }
   }
 }
 
 const allowedOrigins = new Set([
   ...configuredOrigins,
-  ...(env.NODE_ENV === "production" ? [] : defaultLocalOrigins.map(normalizeOrigin))
+  ...(env.NODE_ENV === "production"
+    ? []
+    : defaultLocalOrigins.map(normalizeOrigin)),
 ]);
 
 app.use(helmet());
@@ -65,11 +79,13 @@ app.use(
 
       callback(null, false);
     },
-    credentials: true
-  })
+    credentials: true,
+  }),
 );
 app.use(express.json({ limit: "32kb", strict: true }));
-app.use(morgan("dev"));
+if (env.NODE_ENV !== "production") {
+  app.use(morgan("dev"));
+}
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
@@ -81,5 +97,9 @@ if (env.NODE_ENV !== "production") {
 
 app.use("/auth", authRouter);
 app.use("/", johariRouter);
+
+app.use((_req, res) => {
+  res.status(404).json({ message: "Not found" });
+});
 
 app.use(errorHandler);
