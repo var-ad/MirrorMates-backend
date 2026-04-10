@@ -5,8 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon",
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run prisma:generate && tsc -p tsconfig.json",
     "start": "node dist/index.js",
+    "postinstall": "npm run prisma:generate",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:push": "prisma db push --schema prisma/schema.prisma",
     "db:setup": "ts-node src/db/setup.ts",
@@ -52,7 +53,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "nodemon": "^3.1.7",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.2",
+    "typescript": "5.9.3",
     "typescript-eslint": "^8.58.0"
   }
 }
