@@ -3,30 +3,22 @@ import { z } from "zod";
 
 config();
 
-function parseOriginList(value?: string): string[] {
-  if (!value) {
-    return [];
-  }
+function parseStringList(value?: string): string[] {
+  return value ? value.split(",").map((s) => s.trim()).filter(Boolean) : [];
+}
 
-  return value
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+function parseOriginList(value?: string): string[] {
+  return parseStringList(value);
 }
 
 function parseDnsServerList(value?: string): string[] {
-  if (!value) {
-    return [];
-  }
-
-  return value
-    .split(",")
-    .map((server) => server.trim())
-    .filter(Boolean);
+  return parseStringList(value);
 }
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  NODE_ENV: z
+    .enum(["development", "test", "production"])
+    .default("development"),
   PORT: z.coerce.number().default(4000),
   FRONTEND_URL: z.string().url().default("http://localhost:3000"),
   CORS_ALLOWED_ORIGINS: z.string().optional().transform(parseOriginList),
@@ -43,18 +35,21 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(),
-  JWT_ACCESS_SECRET: z.string().min(16),
-  JWT_REFRESH_SECRET: z.string().min(16),
+  JWT_ACCESS_SECRET: z.string().min(32),
+  JWT_REFRESH_SECRET: z.string().min(32),
   ACCESS_TOKEN_TTL: z.string().default("15m"),
   REFRESH_TOKEN_TTL: z.string().default("7d"),
   GEMINI_API_KEY: z.string().optional(),
-  GEMINI_MODEL: z.string().default("gemini-1.5-flash")
+  GEMINI_MODEL: z.string().default("gemini-1.5-flash"),
 });
 
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error("Invalid environment variables", parsed.error.flatten().fieldErrors);
+  console.error(
+    "Invalid environment variables",
+    parsed.error.flatten().fieldErrors,
+  );
   process.exit(1);
 }
 
