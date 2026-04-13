@@ -213,6 +213,15 @@ export function resolveInviteExpiry(input: {
 export function isUniqueConstraintError(
   error: unknown,
 ): error is Prisma.PrismaClientKnownRequestError {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "P2002"
+  ) {
+    return true;
+  }
+
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2002"

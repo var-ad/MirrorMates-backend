@@ -20,32 +20,39 @@ export const createSessionSchema = z.object({
   adjectiveIds: adjectiveIdsSchema.optional(),
   inviteExpiresInDays: z.number().int().min(1).max(30).optional(),
   inviteExpiresAt: z.coerce.date().optional(),
-  responseIdentityMode: responseIdentityModeSchema.optional()
+  responseIdentityMode: responseIdentityModeSchema.optional(),
 });
 
 export const sessionIdParamSchema = z.object({
-  id: z.string().uuid()
+  id: z.string().uuid(),
 });
 
 export const tokenParamSchema = z.object({
-  token: z.string().trim().min(5).max(200)
+  token: z.string().trim().min(5).max(200),
 });
 
 export const selfSelectSchema = z.object({
-  adjectiveIds: adjectiveIdsSchema
+  adjectiveIds: adjectiveIdsSchema,
 });
 
 export const inviteSubmitSchema = z.object({
   displayName: z.string().trim().max(50).optional(),
-  adjectiveIds: adjectiveIdsSchema
+  adjectiveIds: adjectiveIdsSchema,
+  peerId: z
+    .string()
+    .trim()
+    .min(8)
+    .max(128)
+    .regex(/^[A-Za-z0-9._:-]+$/)
+    .optional(),
 });
 
 export const updateInviteSettingsSchema = z
   .object({
     inviteExpiresInDays: z.number().int().min(1).max(30).optional(),
     inviteExpiresAt: z.coerce.date().optional(),
-    responseIdentityMode: responseIdentityModeSchema.optional()
+    responseIdentityMode: responseIdentityModeSchema.optional(),
   })
   .refine(hasAtLeastOneInviteSetting, {
-    message: "At least one invite setting must be provided"
+    message: "At least one invite setting must be provided",
   });

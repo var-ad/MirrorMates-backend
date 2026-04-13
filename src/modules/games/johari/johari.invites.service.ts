@@ -91,6 +91,23 @@ export async function submitInviteFeedback(input: {
     );
   }
 
+  const existingSubmission = await prisma.peerSubmission.findFirst({
+    where: {
+      sessionId: session.id,
+      fingerprint: input.fingerprint,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (existingSubmission) {
+    throw new AppError(
+      "You have already submitted feedback for this invite",
+      409,
+    );
+  }
+
   try {
     await prisma.peerSubmission.create({
       data: {
