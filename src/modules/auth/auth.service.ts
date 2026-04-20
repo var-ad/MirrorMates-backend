@@ -29,6 +29,7 @@ interface PublicUser {
   email: string;
   fullName: string | null;
   avatarUrl: string | null;
+  hasPasswordLogin: boolean;
 }
 
 interface TokenPair {
@@ -75,13 +76,14 @@ function normalizeEmail(email: string): string {
 }
 
 function toPublicUser(
-  user: Pick<User, "id" | "email" | "fullName" | "avatarUrl">,
+  user: Pick<User, "id" | "email" | "fullName" | "avatarUrl" | "passwordHash">,
 ): PublicUser {
   return {
     id: user.id,
     email: user.email,
     fullName: user.fullName,
     avatarUrl: user.avatarUrl,
+    hasPasswordLogin: Boolean(user.passwordHash),
   };
 }
 
@@ -297,7 +299,7 @@ async function getUserForSession(
   userId: string,
 ): Promise<Pick<
   User,
-  "id" | "email" | "fullName" | "avatarUrl" | "isActive"
+  "id" | "email" | "fullName" | "avatarUrl" | "passwordHash" | "isActive"
 > | null> {
   return prisma.user.findUnique({
     where: {
@@ -308,6 +310,7 @@ async function getUserForSession(
       email: true,
       fullName: true,
       avatarUrl: true,
+      passwordHash: true,
       isActive: true,
     },
   });
