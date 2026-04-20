@@ -12,8 +12,9 @@ import { AppError } from "../../../utils/errors";
 const DEFAULT_INVITE_EXPIRY_DAYS = 7;
 const MAX_INVITE_EXPIRY_DAYS = 30;
 const SHORT_INVITE_CODE_LENGTH = 5;
-const SHORT_INVITE_CODE_REGEX = /^[A-Z0-9]{5}$/i;
-const INVITE_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const SHORT_INVITE_CODE_REGEX = /^[A-Za-z0-9]{5}$/i;
+const INVITE_CODE_ALPHABET =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 export const sessionSelect = {
   id: true,
