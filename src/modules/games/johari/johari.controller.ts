@@ -5,6 +5,7 @@ import {
   computeResults,
   createJohariSession,
   generateSessionReport,
+  generateSessionReportFromToken,
   getInviteMeta,
   getJohariSessionById,
   getLatestSessionReport,
@@ -116,6 +117,21 @@ export const latestReportController = asyncHandler(
             generatedAt: report.createdAt,
           }
         : null,
+    });
+  },
+);
+
+export const generateReportFromTokenController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await generateSessionReportFromToken(req.body.token);
+    res.status(201).json({
+      sessionId: result.sessionId,
+      sessionTitle: result.sessionTitle,
+      reportId: result.reportId,
+      reportText: result.reportText,
+      feedbackText: result.feedbackText,
+      generatedAt: result.generatedAt,
+      results: result.results,
     });
   },
 );

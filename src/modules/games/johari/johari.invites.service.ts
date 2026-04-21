@@ -18,7 +18,10 @@ export async function getInviteMeta(token: string) {
   const normalizedToken = normalizeInviteToken(token);
   const invite = await prisma.johariSession.findFirst({
     where: {
-      inviteToken: normalizedToken,
+      inviteToken: {
+        equals: normalizedToken,
+        mode: "insensitive",
+      },
       inviteExpiresAt: {
         gt: new Date(),
       },
@@ -112,7 +115,7 @@ export async function submitInviteFeedback(input: {
     await prisma.peerSubmission.create({
       data: {
         sessionId: session.id,
-        inviteToken: normalizedToken,
+        inviteToken: session.inviteToken,
         peerDisplayName: displayNameRequired ? trimmedDisplayName : null,
         adjectiveIds: normalizedIds,
         fingerprint: input.fingerprint,
@@ -131,7 +134,7 @@ export async function submitInviteFeedback(input: {
 
   return {
     sessionId: session.id,
-    inviteCode: normalizedToken,
+    inviteCode: session.inviteToken,
     submitted: true,
   };
 }

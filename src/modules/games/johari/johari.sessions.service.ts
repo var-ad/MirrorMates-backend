@@ -182,6 +182,7 @@ export async function updateInviteSettings(
     input.inviteExpiresAt !== undefined
   ) {
     data.inviteExpiresAt = resolveInviteExpiry(input);
+    data.expiryReportEmailSentAt = null;
   }
 
   if (input.responseIdentityMode !== undefined) {

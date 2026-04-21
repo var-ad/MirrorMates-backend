@@ -31,6 +31,10 @@ export const tokenParamSchema = z.object({
   token: z.string().trim().min(5).max(200),
 });
 
+export const reportTokenSchema = z.object({
+  token: z.string().trim().uuid(),
+});
+
 export const selfSelectSchema = z.object({
   adjectiveIds: adjectiveIdsSchema,
 });

@@ -15,7 +15,7 @@ function escapeHtml(text: string): string {
 
 let transporter: Transporter | null = null;
 
-function isSmtpConfigured(): boolean {
+export function isSmtpConfigured(): boolean {
   return Boolean(env.SMTP_HOST && env.SMTP_PORT && env.SMTP_FROM);
 }
 
@@ -119,5 +119,46 @@ It expires in ${input.expiresInMinutes} minutes. If you did not request this, yo
 <p style="font-size: 28px; font-weight: 700; letter-spacing: 6px;">${input.otp}</p>
 <p>It expires in ${input.expiresInMinutes} minutes.</p>
 <p>If you did not request this, you can ignore this email.</p>`
+  });
+}
+
+export async function sendInviteExpiredReportEmail(input: {
+  to: string;
+  fullName?: string | null;
+  sessionTitle: string;
+  reportUrl: string;
+  inviteExpiredAt: Date;
+  peerSubmissionCount: number;
+}): Promise<void> {
+  const trimmedName = input.fullName?.trim();
+  const greetingText = trimmedName ? `Hi ${trimmedName},` : "Hi,";
+  const greetingHtml = trimmedName ? `Hi ${escapeHtml(trimmedName)},` : "Hi,";
+  const sessionTitleText = input.sessionTitle.trim() || "your Johari session";
+  const sessionTitleHtml = escapeHtml(sessionTitleText);
+  const expiredAt = new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(input.inviteExpiredAt);
+  const responseLabel =
+    input.peerSubmissionCount === 1
+      ? "1 response"
+      : `${input.peerSubmissionCount} responses`;
+
+  await sendEmail({
+    to: input.to,
+    subject: `Your MirrorMates invite has closed: ${sessionTitleText}`,
+    text: `${greetingText}
+
+Your MirrorMates invite for "${sessionTitleText}" expired on ${expiredAt}.
+
+You received ${responseLabel}. Open this secure link to generate the Johari report:
+${input.reportUrl}
+
+The link works once and expires automatically after a short period.`,
+    html: `<p>${greetingHtml}</p>
+<p>Your MirrorMates invite for <strong>${sessionTitleHtml}</strong> expired on ${escapeHtml(expiredAt)}.</p>
+<p>You received <strong>${escapeHtml(responseLabel)}</strong>.</p>
+<p><a href="${escapeHtml(input.reportUrl)}" style="display:inline-block;padding:12px 18px;border-radius:999px;background:#ff6a00;color:#ffffff;text-decoration:none;font-weight:700;">Generate Johari report</a></p>
+<p>This link works once and expires automatically after a short period.</p>`,
   });
 }

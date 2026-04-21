@@ -13,8 +13,7 @@ const DEFAULT_INVITE_EXPIRY_DAYS = 7;
 const MAX_INVITE_EXPIRY_DAYS = 30;
 const SHORT_INVITE_CODE_LENGTH = 5;
 const SHORT_INVITE_CODE_REGEX = /^[A-Za-z0-9]{5}$/i;
-const INVITE_CODE_ALPHABET =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+const INVITE_CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 export const sessionSelect = {
   id: true,
@@ -142,6 +141,23 @@ export function buildInviteUrl(inviteToken: string): string {
   ).toString();
 }
 
+export function buildSessionReportUrl(sessionId: string): string {
+  const url = new URL(
+    `session/${encodeURIComponent(sessionId)}`,
+    ensureTrailingSlash(env.FRONTEND_URL),
+  );
+
+  url.searchParams.set("generateReport", "1");
+  return url.toString();
+}
+
+export function buildReportGenerateUrl(token: string): string {
+  const url = new URL("report/generate", ensureTrailingSlash(env.FRONTEND_URL));
+
+  url.searchParams.set("token", token);
+  return url.toString();
+}
+
 export async function serializeSession(
   session: SessionRecord,
   extra?: { peerSubmissionCount?: number },
@@ -234,9 +250,12 @@ export async function generateUniqueInviteCode(
 ): Promise<string> {
   for (let attempt = 0; attempt < 25; attempt += 1) {
     const candidate = createShortInviteCode();
-    const existing = await executor.johariSession.findUnique({
+    const existing = await executor.johariSession.findFirst({
       where: {
-        inviteToken: candidate,
+        inviteToken: {
+          equals: candidate,
+          mode: "insensitive",
+        },
       },
       select: {
         id: true,

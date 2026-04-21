@@ -1,4 +1,5 @@
 import { generateGeminiJohariReport } from "../../reports/gemini.service";
+import { consumeReportAccessToken } from "../../reports/report-access.service";
 import {
   getLatestGeminiReport,
   saveGeminiReport,
@@ -42,4 +43,18 @@ export async function getLatestSessionReport(
 
   const report = await getLatestGeminiReport(sessionId, requesterId);
   return report;
+}
+
+export async function generateSessionReportFromToken(token: string) {
+  const access = await consumeReportAccessToken(token);
+  const report = await generateSessionReport(access.sessionId, access.userId);
+  const session = await getSession(access.sessionId);
+  const results = await computeResults(access.sessionId, access.userId);
+
+  return {
+    sessionId: access.sessionId,
+    sessionTitle: session.title,
+    results,
+    ...report,
+  };
 }

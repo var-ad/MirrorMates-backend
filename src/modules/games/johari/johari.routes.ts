@@ -10,6 +10,7 @@ import {
 import { validate } from "../../../middleware/validate";
 import {
   createSessionController,
+  generateReportFromTokenController,
   generateReportController,
   getSessionController,
   inviteMetaController,
@@ -26,6 +27,7 @@ import {
   inviteSubmitSchema,
   selfSelectSchema,
   sessionIdParamSchema,
+  reportTokenSchema,
   tokenParamSchema,
   updateInviteSettingsSchema
 } from "./johari.validators";
@@ -78,4 +80,10 @@ johariRouter.post(
   reportGenerationRateLimiter,
   validate({ params: sessionIdParamSchema }),
   generateReportController
+);
+
+johariRouter.post(
+  "/report/generate",
+  validate({ body: reportTokenSchema }),
+  generateReportFromTokenController,
 );

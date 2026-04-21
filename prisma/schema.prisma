@@ -18,20 +18,20 @@ enum JohariResponseIdentityMode {
 }
 
 model User {
-  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email          String              @unique
-  passwordHash   String?             @map("password_hash")
-  fullName       String?             @map("full_name")
-  avatarUrl      String?             @map("avatar_url")
-  emailVerified  Boolean             @default(true) @map("email_verified")
-  isActive       Boolean             @default(true) @map("is_active")
-  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  googleAccounts UserGoogleAccount[]
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email            String              @unique
+  passwordHash     String?             @map("password_hash")
+  fullName         String?             @map("full_name")
+  avatarUrl        String?             @map("avatar_url")
+  emailVerified    Boolean             @default(true) @map("email_verified")
+  isActive         Boolean             @default(true) @map("is_active")
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  googleAccounts   UserGoogleAccount[]
   passwordResetOtp PasswordResetOtp?
-  refreshTokens  RefreshToken[]
-  johariSessions JohariSession[]     @relation("JohariSessionOwner")
-  selfSelections SelfSelection[]
+  refreshTokens    RefreshToken[]
+  johariSessions   JohariSession[]     @relation("JohariSessionOwner")
+  selfSelections   SelfSelection[]
 
   @@map("users")
 }
@@ -113,22 +113,24 @@ model AdjectiveMaster {
 }
 
 model JohariSession {
-  id                   String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ownerUserId          String                     @map("owner_user_id") @db.Uuid
-  title                String                     @default("My Johari Window") @db.VarChar(120)
-  inviteToken          String                     @unique @map("invite_token")
-  inviteExpiresAt      DateTime                   @map("invite_expires_at") @db.Timestamptz(6)
-  responseIdentityMode JohariResponseIdentityMode @default(NAMED) @map("response_identity_mode")
-  status               JohariSessionStatus        @default(ACTIVE)
-  createdAt            DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime                   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  owner                User                       @relation("JohariSessionOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
-  selfSelections       SelfSelection[]
-  peerSubmissions      PeerSubmission[]
-  computedResult       ComputedResult?
+  id                      String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerUserId             String                     @map("owner_user_id") @db.Uuid
+  title                   String                     @default("My Johari Window") @db.VarChar(120)
+  inviteToken             String                     @unique @map("invite_token")
+  inviteExpiresAt         DateTime                   @map("invite_expires_at") @db.Timestamptz(6)
+  expiryReportEmailSentAt DateTime?                  @map("expiry_report_email_sent_at") @db.Timestamptz(6)
+  responseIdentityMode    JohariResponseIdentityMode @default(NAMED) @map("response_identity_mode")
+  status                  JohariSessionStatus        @default(ACTIVE)
+  createdAt               DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime                   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  owner                   User                       @relation("JohariSessionOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  selfSelections          SelfSelection[]
+  peerSubmissions         PeerSubmission[]
+  computedResult          ComputedResult?
 
   @@index([ownerUserId], map: "johari_sessions_owner_user_id_idx")
   @@index([createdAt], map: "johari_sessions_created_at_idx")
+  @@index([inviteExpiresAt, expiryReportEmailSentAt], map: "johari_sessions_expiry_report_email_idx")
   @@map("johari_sessions")
 }
 

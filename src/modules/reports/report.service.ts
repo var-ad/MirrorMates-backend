@@ -14,7 +14,7 @@ export async function saveGeminiReport(input: {
     prompt: input.prompt,
     pools: input.pools,
     reportText: input.reportText,
-    gameType: "johari"
+    gameType: "johari",
   });
 }
 

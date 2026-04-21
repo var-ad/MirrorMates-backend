@@ -7,7 +7,10 @@ export async function getActiveSessionByInviteToken(token: string) {
 
   return prisma.johariSession.findFirst({
     where: {
-      inviteToken: normalizedToken,
+      inviteToken: {
+        equals: normalizedToken,
+        mode: "insensitive"
+      },
       inviteExpiresAt: {
         gt: new Date()
       },

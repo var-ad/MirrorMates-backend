@@ -2,6 +2,7 @@ import { app } from "./app";
 import { env } from "./config/env";
 import { connectMongo, disconnectMongo } from "./db/mongo";
 import { prisma } from "./db/prisma";
+import { startInviteExpiryEmailScheduler } from "./modules/games/johari/johari.expiry-notifier";
 
 async function start(): Promise<void> {
   try {
@@ -11,6 +12,7 @@ async function start(): Promise<void> {
     const server = app.listen(env.PORT, () => {
       console.log(`Backend listening on port ${env.PORT}`);
     });
+    const stopInviteExpiryEmailScheduler = startInviteExpiryEmailScheduler();
 
     let isShuttingDown = false;
 
@@ -21,6 +23,7 @@ async function start(): Promise<void> {
       isShuttingDown = true;
 
       console.log(`${signal} received, closing server`);
+      stopInviteExpiryEmailScheduler();
       server.close(() => {
         void (async () => {
           try {
