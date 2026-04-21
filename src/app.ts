@@ -5,7 +5,6 @@ import morgan from "morgan";
 import { env } from "./config/env";
 import { errorHandler } from "./middleware/error.middleware";
 import { authRouter } from "./modules/auth/auth.routes";
-import { devRouter } from "./modules/dev/dev.routes";
 import { johariRouter } from "./modules/games/johari/johari.routes";
 import { AppError } from "./utils/errors";
 
@@ -90,10 +89,6 @@ if (env.NODE_ENV !== "production") {
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
-
-if (env.NODE_ENV !== "production") {
-  app.use("/", devRouter);
-}
 
 app.use("/auth", authRouter);
 app.use("/", johariRouter);

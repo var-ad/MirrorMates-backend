@@ -25,9 +25,9 @@ export const sessionSelect = {
   createdAt: true,
 } as const;
 
-export type PrismaJohariExecutor = typeof prisma | Prisma.TransactionClient;
+type PrismaJohariExecutor = typeof prisma | Prisma.TransactionClient;
 
-export type SessionRecord = Pick<
+type SessionRecord = Pick<
   JohariSession,
   | "id"
   | "ownerUserId"
@@ -139,16 +139,6 @@ export function buildInviteUrl(inviteToken: string): string {
     `invite/${encodeURIComponent(inviteToken)}`,
     ensureTrailingSlash(env.FRONTEND_URL),
   ).toString();
-}
-
-export function buildSessionReportUrl(sessionId: string): string {
-  const url = new URL(
-    `session/${encodeURIComponent(sessionId)}`,
-    ensureTrailingSlash(env.FRONTEND_URL),
-  );
-
-  url.searchParams.set("generateReport", "1");
-  return url.toString();
 }
 
 export function buildReportGenerateUrl(token: string): string {

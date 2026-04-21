@@ -23,7 +23,10 @@ function buildPrompt(input: JohariReportInput): string {
   const topPeerSummary =
     topPeerAdjectives.length > 0
       ? topPeerAdjectives
-          .map((item) => `${item.adjective} (${item.count}/${peerSubmissionCount}, ${item.peerSupportPercent}%)`)
+          .map(
+            (item) =>
+              `${item.adjective} (${item.count}/${peerSubmissionCount}, ${item.peerSupportPercent}%)`,
+          )
           .join(", ")
       : "None";
 
@@ -48,18 +51,20 @@ function buildPrompt(input: JohariReportInput): string {
     `Open: ${pools.open.join(", ") || "None"}`,
     `Blind: ${pools.blind.join(", ") || "None"}`,
     `Hidden: ${pools.hidden.join(", ") || "None"}`,
-    `Unknown: ${pools.unknown.join(", ") || "None"}`
+    `Unknown: ${pools.unknown.join(", ") || "None"}`,
   ].join("\n");
 }
 
-export async function generateGeminiJohariReport(input: JohariReportInput): Promise<{ prompt: string; reportText: string }> {
+export async function generateGeminiJohariReport(
+  input: JohariReportInput,
+): Promise<{ prompt: string; reportText: string }> {
   const prompt = buildPrompt(input);
 
   if (!env.GEMINI_API_KEY) {
     return {
       prompt,
       reportText:
-        "Gemini API key is not configured. This is a placeholder report. Add GEMINI_API_KEY in backend .env to enable AI-generated insights."
+        "Gemini API key is not configured. This is a placeholder report. Add GEMINI_API_KEY in backend .env to enable AI-generated insights.",
     };
   }
 

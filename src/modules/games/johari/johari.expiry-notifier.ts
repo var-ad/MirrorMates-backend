@@ -13,7 +13,7 @@ const EXPIRY_EMAIL_BATCH_SIZE = 25;
 let scheduler: NodeJS.Timeout | null = null;
 let runInProgress = false;
 
-export async function sendExpiredInviteReportEmails(
+async function sendExpiredInviteReportEmails(
   now = new Date(),
 ): Promise<number> {
   if (!isSmtpConfigured()) {
@@ -122,7 +122,7 @@ export function startInviteExpiryEmailScheduler(): () => void {
   return stopInviteExpiryEmailScheduler;
 }
 
-export function stopInviteExpiryEmailScheduler(): void {
+function stopInviteExpiryEmailScheduler(): void {
   if (!scheduler) {
     return;
   }
