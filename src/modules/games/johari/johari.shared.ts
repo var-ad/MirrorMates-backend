@@ -53,7 +53,7 @@ export interface ResultAdjective {
 }
 
 export interface WindowPayload {
-  key: keyof import("../../reports/gemini.service").JohariPools;
+  key: keyof import("../../reports/openrouter.service").JohariPools;
   title: string;
   subtitle: string;
   description: string;

@@ -1,5 +1,5 @@
 import { prisma } from "../../../db/prisma";
-import { JohariPools } from "../../reports/gemini.service";
+import { JohariPools } from "../../reports/openrouter.service";
 import {
   ResultAdjective,
   WindowPayload,

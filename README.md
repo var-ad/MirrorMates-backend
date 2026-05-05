@@ -29,7 +29,7 @@ The service is built with Express and TypeScript, uses PostgreSQL for relational
 - Generates short invite codes, full invite URLs, and QR codes for easy sharing.
 - Supports named or anonymous peer responses.
 - Computes Johari windows and top peer-selected adjectives automatically.
-- Can generate neutral reflection reports with Gemini, with a safe placeholder fallback when Gemini is not configured.
+- Can generate neutral reflection reports with OpenRouter, with a safe placeholder fallback when OpenRouter is not configured.
 - Sends automatic post-expiry report emails with single-use access links when SMTP is configured.
 - Applies rate limiting and input validation across auth, session, invite, and report routes.
 
@@ -41,7 +41,7 @@ The service is built with Express and TypeScript, uses PostgreSQL for relational
 - Document data: Mongoose + MongoDB
 - Auth: JWT access and refresh tokens, Google ID token verification
 - Email: Nodemailer
-- AI: Google Gemini via `@google/generative-ai`
+- AI: OpenRouter chat completions API
 - Containerization: Docker
 
 ## Project structure
@@ -71,7 +71,7 @@ Helpful entry points:
 - [`src/index.ts`](src/index.ts): server bootstrap, DB connections, shutdown handling, invite-expiry scheduler
 - [`src/modules/auth`](src/modules/auth): signup, login, Google auth, token rotation, password reset
 - [`src/modules/games/johari`](src/modules/games/johari): session lifecycle, invites, result computation
-- [`src/modules/reports`](src/modules/reports): Gemini report generation and one-time report access tokens
+- [`src/modules/reports`](src/modules/reports): OpenRouter report generation and one-time report access tokens
 - [`prisma/schema.prisma`](prisma/schema.prisma): PostgreSQL schema
 
 ## Getting started
@@ -89,7 +89,7 @@ Optional but feature-enabling services:
 
 - Google OAuth client ID for `/auth/google`
 - SMTP credentials for signup OTP, password reset OTP, and invite-expiry emails
-- Gemini API key for AI-generated report text
+- OpenRouter API key for AI-generated report text
 
 ### Installation
 
@@ -138,15 +138,15 @@ Feature flags and integrations:
 | `SMTP_USER`            | No                      | SMTP username, if auth is required                |
 | `SMTP_PASS`            | No                      | SMTP password, if auth is required                |
 | `SMTP_FROM`            | Only for email features | Sender address shown in outgoing mail             |
-| `GEMINI_API_KEY`       | No                      | Enables real Gemini-generated report text         |
-| `GEMINI_MODEL`         | No                      | Gemini model name, defaults to `gemini-1.5-flash` |
+| `OPENROUTER_API_KEY`   | No                      | Enables real OpenRouter-generated report text     |
+| `OPENROUTER_MODEL`     | No                      | OpenRouter model name, defaults to `openai/gpt-4o-mini` |
 
 Important behavior to know:
 
 - For local development, set `FRONTEND_URL` to your frontend dev URL, usually `http://localhost:3000`.
 - Password signup and forgot-password flows require SMTP. Without it, those routes return `503`.
 - Google sign-in is unavailable until `GOOGLE_CLIENT_ID` is configured.
-- Report generation still works without Gemini, but returns a clear placeholder report instead of AI output.
+- Report generation still works without OpenRouter, but returns a clear placeholder report instead of AI output.
 - In production, wildcard CORS origins and localhost origins are rejected on startup.
 
 ### Database setup
@@ -302,7 +302,7 @@ PostgreSQL stores the transactional and user-facing state:
 
 MongoDB stores generated and time-bound backend documents:
 
-- Gemini-generated reports
+- OpenRouter-generated reports
 - single-use report access tokens with TTL expiry
 
 ## Where users can get help

@@ -1,8 +1,8 @@
-import { generateGeminiJohariReport } from "../../reports/gemini.service";
+import { generateOpenRouterJohariReport } from "../../reports/openrouter.service";
 import { consumeReportAccessToken } from "../../reports/report-access.service";
 import {
-  getLatestGeminiReport,
-  saveGeminiReport,
+  getLatestGeneratedReport,
+  saveGeneratedReport,
 } from "../../reports/report.service";
 import { assertOwner, getSession } from "./johari.shared";
 import { computeResults } from "./johari.results.service";
@@ -13,12 +13,12 @@ export async function generateSessionReport(
 ) {
   const computed = await computeResults(sessionId, requesterId);
 
-  const generated = await generateGeminiJohariReport({
+  const generated = await generateOpenRouterJohariReport({
     pools: computed.pools,
     peerSubmissionCount: computed.summary.peerSubmissionCount,
     topPeerAdjectives: computed.summary.topPeerAdjectives,
   });
-  const saved = await saveGeminiReport({
+  const saved = await saveGeneratedReport({
     userId: requesterId,
     sessionId,
     prompt: generated.prompt,
@@ -41,7 +41,7 @@ export async function getLatestSessionReport(
   const session = await getSession(sessionId);
   assertOwner(requesterId, session.ownerUserId);
 
-  const report = await getLatestGeminiReport(sessionId, requesterId);
+  const report = await getLatestGeneratedReport(sessionId, requesterId);
   return report;
 }
 

@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "../../config/env";
 
 export interface JohariPools {
@@ -16,6 +15,17 @@ interface JohariReportInput {
     count: number;
     peerSupportPercent: number;
   }>;
+}
+
+interface OpenRouterChatCompletionResponse {
+  choices?: Array<{
+    message?: {
+      content?: string | Array<{ type?: string; text?: string }>;
+    };
+  }>;
+  error?: {
+    message?: string;
+  };
 }
 
 function buildPrompt(input: JohariReportInput): string {
@@ -55,31 +65,80 @@ function buildPrompt(input: JohariReportInput): string {
   ].join("\n");
 }
 
-export async function generateGeminiJohariReport(
+function extractMessageContent(response: OpenRouterChatCompletionResponse) {
+  const content = response.choices?.[0]?.message?.content;
+
+  if (typeof content === "string") {
+    return content.trim();
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => (part.type === "text" ? part.text : ""))
+      .filter(Boolean)
+      .join("\n")
+      .trim();
+  }
+
+  return "";
+}
+
+export async function generateOpenRouterJohariReport(
   input: JohariReportInput,
 ): Promise<{ prompt: string; reportText: string }> {
   const prompt = buildPrompt(input);
 
-  if (!env.GEMINI_API_KEY) {
+  if (!env.OPENROUTER_API_KEY) {
     return {
       prompt,
       reportText:
-        "Gemini API key is not configured. This is a placeholder report. Add GEMINI_API_KEY in backend .env to enable AI-generated insights.",
+        "OpenRouter API key is not configured. This is a placeholder report. Add OPENROUTER_API_KEY in backend .env to enable AI-generated insights.",
     };
   }
 
-  const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL });
-
   try {
-    const response = await model.generateContent(prompt);
-    const reportText = response.response.text();
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": env.FRONTEND_URL,
+          "X-Title": "MirrorMates",
+        },
+        body: JSON.stringify({
+          model: env.OPENROUTER_MODEL,
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+        }),
+      },
+    );
+    const payload = (await response.json()) as OpenRouterChatCompletionResponse;
+
+    if (!response.ok) {
+      throw new Error(
+        payload.error?.message ?? `OpenRouter request failed (${response.status})`,
+      );
+    }
+
+    const reportText = extractMessageContent(payload);
+
+    if (!reportText) {
+      throw new Error("OpenRouter response did not include report text");
+    }
+
     return {
       prompt,
       reportText,
     };
   } catch (error) {
-    console.error("Gemini generateContent failed", error);
+    console.error("OpenRouter chat completion failed", error);
     const detail =
       env.NODE_ENV === "production"
         ? "Please try again in a few minutes."
