@@ -41,6 +41,7 @@ const envSchema = z.object({
   REFRESH_TOKEN_TTL: z.string().default("7d"),
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_MODEL: z.string().default("openai/gpt-4o-mini"),
+  GOQR_EXECUTABLE_PATH: z.string().default("bin/goqr.exe"),
 });
 
 const parsed = envSchema.safeParse(process.env);

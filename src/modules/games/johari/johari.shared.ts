@@ -1,10 +1,13 @@
 import crypto from "crypto";
+import { execFile } from "child_process";
+import { access } from "fs/promises";
+import path from "path";
+import { promisify } from "util";
 import {
   JohariResponseIdentityMode,
   JohariSession,
   Prisma,
 } from "@prisma/client";
-import QRCode from "qrcode";
 import { env } from "../../../config/env";
 import { prisma } from "../../../db/prisma";
 import { AppError } from "../../../utils/errors";
@@ -14,6 +17,7 @@ const MAX_INVITE_EXPIRY_DAYS = 30;
 const SHORT_INVITE_CODE_LENGTH = 5;
 const SHORT_INVITE_CODE_REGEX = /^[A-Za-z0-9]{5}$/i;
 const INVITE_CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const execFileAsync = promisify(execFile);
 
 export const sessionSelect = {
   id: true,
@@ -83,11 +87,38 @@ function createShortInviteCode(): string {
 }
 
 export async function buildQrCodeDataUrl(inviteUrl: string): Promise<string> {
-  return QRCode.toDataURL(inviteUrl, {
-    errorCorrectionLevel: "M",
-    margin: 2,
-    width: 280,
-  });
+  const executablePath = await resolveGoQrExecutablePath();
+  const { stdout } = await execFileAsync(
+    executablePath,
+    ["-text", inviteUrl, "-data-url"],
+    {
+      encoding: "utf8",
+      maxBuffer: 1024 * 1024,
+    },
+  );
+
+  return stdout.trim();
+}
+
+async function resolveGoQrExecutablePath(): Promise<string> {
+  const configuredPath = env.GOQR_EXECUTABLE_PATH;
+  const candidates = path.isAbsolute(configuredPath)
+    ? [configuredPath]
+    : [
+        path.resolve(process.cwd(), configuredPath),
+        path.resolve(process.cwd(), "..", configuredPath),
+      ];
+
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Keep checking likely local layouts before falling back to the default.
+    }
+  }
+
+  return candidates[0];
 }
 
 export function normalizeAdjectiveIds(adjectiveIds: number[]): number[] {
