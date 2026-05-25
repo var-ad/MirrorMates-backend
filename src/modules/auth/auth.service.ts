@@ -891,7 +891,22 @@ export async function refresh(
   refreshToken: string,
   context: AuthContext,
 ): Promise<TokenPair> {
-  const payload = verifyRefreshToken(refreshToken);
+  let payload: RefreshTokenPayload;
+
+  try {
+    payload = verifyRefreshToken(refreshToken);
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new AppError("Refresh token expired", 401);
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new AppError(INVALID_REFRESH_MESSAGE, 401);
+    }
+
+    throw error;
+  }
+
   const hashedToken = hashToken(refreshToken);
   const now = new Date();
 

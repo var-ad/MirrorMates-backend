@@ -4,6 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { env } from "./config/env";
 import { errorHandler } from "./middleware/error.middleware";
+import { apiRateLimiter } from "./middleware/rateLimiters";
 import { authRouter } from "./modules/auth/auth.routes";
 import { johariRouter } from "./modules/games/johari/johari.routes";
 import { AppError } from "./utils/errors";
@@ -81,6 +82,7 @@ app.use(
     credentials: true,
   }),
 );
+app.use(apiRateLimiter);
 app.use(express.json({ limit: "32kb", strict: true }));
 if (env.NODE_ENV !== "production") {
   app.use(morgan("dev"));

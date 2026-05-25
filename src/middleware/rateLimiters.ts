@@ -27,6 +27,12 @@ export const authSignupRateLimiter = createJsonRateLimiter({
   message: "Too many signup attempts. Try again later."
 });
 
+export const apiRateLimiter = createJsonRateLimiter({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: "Too many requests. Try again later."
+});
+
 export const authLoginRateLimiter = createJsonRateLimiter({
   windowMs: 10 * 60 * 1000,
   max: 5,
